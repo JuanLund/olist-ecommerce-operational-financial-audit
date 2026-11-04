@@ -51,10 +51,30 @@ Para revertir estas fugas operativas y financieras, se diseñaron tres iniciativ
 * **Flete Incremental en Carrito (> R$ 150) y Geo-Priorización:** Modificar la regla de checkout en categorías del hogar para bonificar el 50% del flete a partir de la segunda unidad del mismo vendedor en compras superiores a R$ 150 (comprimiendo el costo de envío del 23.6% al ~14.8%). A la vez, priorizar en el buscador a vendedores del mismo estado para bultos >5 kg, aprovechando que el envío local cumple el 94% del SLA en solo 7.9 días (meta: +R$ 310k en GMV incremental).
 * **Motor de Recompra "Día 65" en Belleza y Salud + QR In-Box:** Filtrar a clientes que recibieron su pedido a tiempo (4.29 ★) y disparar un flujo automatizado de reposición entre los días 65 y 75 post-entrega en Belleza y Salud (la categoría #1 en ventas con R$ 1.23M y reposición natural de 60 a 90 días). Complementarlo con un código QR físico en el paquete para capturar al cliente en la app de Olist sin pagar publicidad (meta: elevar la recompra del 3.0% al 7.5%, sumando +R$ 240k en GMV con CAC = R$ 0).
 
-## 7. Entregable Final
+## 7. Entregables y Estructura del Repositorio
 
-El detalle técnico, la bitácora metodológica y la presentación ejecutiva completa se encuentran disponibles en este repositorio:
+El repositorio se encuentra estructurado en carpetas modulares para facilitar su navegación y reproducibilidad:
 
-* **Presentación Ejecutiva:** [`Olist E-Commerce_ Auditoría Operativa y Financiera.pptx`](./Olist%20E-Commerce_%20Auditor%C3%ADa%20Operativa%20y%20Financiera.pptx) (13 diapositivas ejecutivas con notas del orador).
-* **Scripts SQL Modulares:** Disponibles en la carpeta [`/sql_scripts`](./sql_scripts/) para replicar todo el pipeline en Google BigQuery.
-* **Documentación Metodológica Completa:** [`proyecto_2_auditoria_operativa_y_financiera_olist_e_commerce_completo.md`](./proyecto_2_auditoria_operativa_y_financiera_olist_e_commerce_completo.md).
+```text
+├── deliverables/
+│   ├── Olist_Presentacion_Ejecutiva_Final.pptx    # Deck ejecutivo de 13 slides con notas del orador
+│   ├── Olist_Log_Auditoria_Metodologica.docx      # Bitácora detallada de decisiones y reglas de negocio
+│   └── Olist_Caso_Estudio_Completo.md             # Documentación exhaustiva con tablas maestras
+├── sql/
+│   ├── 01_vw_orders_clean.sql                     # Vista maestra certificada en BigQuery
+│   ├── 02_sla_cliff_and_last_mile_audit.sql       # Desglose First-Mile vs. Last-Mile y SLA Cliff
+│   ├── 03_unit_economics_and_multi_item_freight.sql# Análisis de flete multi-unidad por categoría
+│   └── 04_cohort_retention_and_sla_impact.sql     # Análisis de cohortes con ROW_NUMBER y LAG
+├── data/
+│   ├── 01_corredores_logisticos_bigquery.csv      # Extracto de métricas por corredor logístico
+│   ├── 02_unit_economics_categorias_bigquery.csv  # Extracto de ingresos y ratio de flete
+│   └── 03_sla_cliff_satisfaccion_bigquery.csv     # Extracto de tramos de SLA y reseñas
+├── assets/
+│   ├── tableau_dashboard.png                      # Captura del tablero en Tableau Public
+│   └── sla_cliff_chart.png                        # Curva del Acantilado de Satisfacción
+└── README.md
+```
+
+* **Presentación Ejecutiva:** [Ver Presentación Ejecutiva en `/deliverables`](./deliverables/Olist_Presentacion_Ejecutiva_Final.pptx)
+* **Scripts SQL:** [Consultas SQL en `/sql`](./sql/)
+* **Datos Procesados:** [Extractos de BigQuery en `/data`](./data/)
