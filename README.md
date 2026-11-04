@@ -1,80 +1,105 @@
-# 🛒 Auditoría Operativa y Financiera E-Commerce: Caso Olist
+# 🛒 E-Commerce Operational & Financial Audit: Olist Case
 ![BigQuery](https://img.shields.io/badge/Google_BigQuery-Cloud_SQL-4285F4?logo=google-cloud&logoColor=white)
 ![Tableau](https://img.shields.io/badge/Tableau-Public-E97627?logo=tableau&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Completed-success)
 
-Auditoría Operativa y Financiera sobre 96,470 Ventas Reales: Diagnóstico de Cuellos de Botella Logísticos, Fricción de Flete y Retención
+> **Operational and Financial Audit of 96,470 Real Sales: Forensic Diagnosis of Logistics Bottlenecks, Freight Disparities, and Repurchase Retention**  
+> **Author:** Juan E. Lund — Operations & Partner Manager | Data & Decision Scientist  
+> **Language:** **English** | [Versión en Español](README.es.md)
 
-## 1. Resumen Ejecutivo (Answer-First)
+---
 
-Para proteger el margen de contribución y escalar el volumen de ventas sin depender exclusivamente del gasto continuo en publicidad (CAC), la operación de Olist debe ejecutar una reingeniería quirúrgica en tres frentes: **desacoplar la última milla en Río de Janeiro del servicio postal estatal, corregir la distorsión tarifaria de flete en compras multi-ítem de categorías pesadas (>23% de envío) y activar un motor de retención en el ciclo natural de reposición (65 a 85 días)**.
+## 1. Executive Summary (Answer-First)
 
-Este análisis demuestra que el crecimiento en ventas brutas ocultaba pérdidas críticas de satisfacción y margen, y propone un plan de acción respaldado por pruebas A/B con un **impacto anual proyectado de R$ 1,230,000 en valor de negocio** (~R$ 680k en GMV protegido de quejas severas y R$ 550k en ventas incrementales sin CAC).
+To protect operating contribution margins and scale sales volume without relying solely on paid customer acquisition (CAC), Olist's leadership must execute a surgical three-pronged operational intervention: **decouple last-mile carrier delivery in Rio de Janeiro from the state postal service, correct the multi-item freight pricing distortion in heavy categories (>23% freight ratio), and activate an automated retention replenishment engine between days 65 and 85 post-delivery**.
 
-## 2. El Problema (Ask)
+This audit demonstrates that gross GMV growth was concealing severe SLA failures and margin leakage, and establishes an action plan backed by an 8-week A/B testing framework projecting an **annualized business value of R$ 1,230,000** (~R$ 680K in GMV protected from detractor churn and R$ 550K in incremental organic repurchase sales at zero CAC).
 
-El equipo directivo y de operaciones de Olist identificó que, a pesar del aumento en órdenes, el marketplace enfrentaba tres dolores estructurales:
-* **Incumplimiento logístico:** Frecuentes reclamos y quejas de clientes en corredores interestatales clave.
-* **Fricción tarifaria por flete:** Categorías voluminosas donde el costo de envío supera una cuarta parte del valor del producto, elevando el abandono en el checkout.
-* **Nula retención orgánica:** Dependencia casi total de captar clientes nuevos de una sola compra.
+---
 
-El objetivo comercial de este proyecto fue auditar la base de datos relacional en Google BigQuery para encontrar las causas raíz de estas fugas y diseñar un plan de intervenciones medibles.
+## 2. Business Problem & Operational Audit (Ask)
 
-## 3. Datos y Limpieza (Prepare & Process)
+Olist's executive committee identified three structural operational challenges:
+* **Logistics SLA Breaches:** Customer complaints concentrated in high-density corridors.
+* **Freight Pricing Friction:** Heavy and bulky categories where shipping fees exceed a quarter of the product value, inflating checkout abandonment.
+* **Zero Organic Retention:** A 97.0% reliance on single-purchase transactions.
 
-Se auditó el ecosistema relacional de Olist compuesto por 7 tablas interconectadas (`orders`, `order_items`, `order_payments`, `order_reviews`, `customers`, `products` y `sellers`).
+The business objective was to audit the relational schema in Google BigQuery to isolate root causes and design measurable, data-backed operational interventions.
 
-* **Herramientas:** Google BigQuery (SQL Avanzado: Joins relacionales, CTEs, Window Functions `ROW_NUMBER`, `LAG`, `RANK`, Vistas) para el modelado y auditoría; Tableau Public para la visualización ejecutiva.
-* **Volumen:** Se procesaron 99,441 órdenes brutas. Para evitar promedios engañosos y errores de cálculo, se aplicó una depuración estricta eliminando 1,107 pedidos en tránsito, 625 cancelados, 8 entregas con fechas nulas y 609 órdenes sin stock (~R$ 97k de GMV perdido por inventario fantasma).
-* **Población Certificada:** Se consolidó la vista maestra `vw_orders_clean` con **96,470 ventas entregadas completas** y **93,350 clientes únicos**.
+---
 
-## 4. Análisis y Hallazgos Clave (Analyze)
+## 3. Data Cleaning & Schema Architecture (Prepare & Process)
 
-El análisis cuantitativo sobre la base certificada reveló tres realidades contraintuitivas que explican el deterioro de la experiencia y la rentabilidad:
+The audit examined Olist's 7-table relational ecosystem (`orders`, `order_items`, `order_payments`, `order_reviews`, `customers`, `products`, `sellers`).
 
-* **El "Acantilado del 4.° Día" (SLA Cliff):** El cliente tolera entre 1 y 3 días de atraso respecto a la fecha prometida (manteniendo 3.76 ★ de calificación y solo 19.3% de quejas). Sin embargo, **al cruzar el 4.° día de demora, la satisfacción colapsa a 2.31 ★ y los clientes detractores se triplican al 61.6%**, alcanzando un 78.3% pasados los 7 días.
-* **Causa Raíz en Río de Janeiro (Falla de Última Milla, no del Vendedor):** La ruta São Paulo → Río de Janeiro (`SP -> RJ`) concentra casi el 10% del volumen nacional (9,403 pedidos) y sufre un 14.85% de retraso con 12.6 días de demora promedio. Al descomponer los tiempos en SQL, se demostró que el vendedor despacha en solo 4.6 días, pero **el transportista demora 31.3 días en las entregas atrasadas (el 87.2% del tiempo se pierde en la última milla postal de Río)**.
-* **Falla Algorítmica en Carritos Multi-Ítem (>23% Flete):** En categorías pesadas como Muebles (`moveis_decoracao`: 23.65% de flete) y Bazar (`utilidades_domesticas`: 23.19%), el sistema cobraba el 100% del flete por cada unidad adicional sin descuento por consolidación de paquete (detectado en 6,570 órdenes), encareciendo el flete al 27.4% en compras de 2+ unidades y castigando el ticket promedio.
-* **Ciclo de Recompra Tardío (81.7 Días) y Castigo por Atraso:** El 97.0% de los clientes compra una sola vez. Al analizar a los 2,801 compradores que repitieron pedido mediante `LAG()`, se descubrió que el ciclo de maduración real toma entre **81.7 y 116.8 días** (no ocurre en los primeros 15 días). Además, sufrir un atraso en la primera entrega reduce la probabilidad de recompra en un -17.4% relativo.
+* **Tools:** Google BigQuery (Advanced SQL: Relational Joins, Multi-stage CTEs, Window Functions `ROW_NUMBER`, `LAG`, `RANK`, Materialized Views) and Tableau Public.
+* **Volume & Hygiene:** 99,441 raw orders were audited. Strict business filters removed 1,107 orders in transit, 625 canceled orders, 8 missing delivery dates, and 609 out-of-stock orders (~R$ 97K in phantom inventory).
+* **Certified Population:** View `vw_orders_clean` finalized with **96,470 completed sales** and **93,350 unique customers**.
 
-## 5. Visualización (Share)
+---
 
-Los hallazgos se estructuraron en un tablero ejecutivo interactivo de tres vistas para monitoreo directivo: Ranking de Corredores Logísticos, Curva Dual del Acantilado de Satisfacción y Matriz de Unit Economics por Categoría.
+## 4. Key Quantitative Insights (Analyze)
 
-* **Dashboard en Tableau Public:** [Ver Tablero Interactivo Olist E-Commerce en Tableau Public](https://public.tableau.com/views/Brazil_ecomercce/Dashboard1?:language=es-ES&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
+1. **The "Day 4 SLA Cliff" (Satisfaction Collapse):**
+   * Customers tolerate 1 to 3 days of carrier delay past the estimated date (maintaining 3.76 ★ and only 19.3% complaint rates).
+   * **Upon crossing Day 4 of delay, satisfaction plummets to 2.31 ★ and detractor complaints triple to 61.6%**, reaching 78.3% past Day 7.
+2. **Rio de Janeiro Last-Mile Failure (Carrier vs. Seller Breakdown):**
+   * The São Paulo → Rio de Janeiro corridor (`SP -> RJ`) concentrates nearly 10% of national volume (9,403 orders) and suffers a 14.85% delay rate with an average 12.6-day lag.
+   * Decomposing fulfillment intervals in SQL revealed that sellers dispatch packages in just 4.6 days, but **carriers take 31.3 days on delayed shipments (87.2% of total delay occurs during the postal last mile in Rio)**.
+3. **Algorithmic Multi-Item Freight Inefficiency (>23% Shipping):**
+   * In heavy categories such as Furniture (`moveis_decoracao`: 23.65% freight) and Housewares (`utilidades_domesticas`: 23.19%), the checkout algorithm charged 100% freight per additional unit without parcel consolidation, driving freight to 27.4% on 2+ units and depressing average order value (AOV).
+4. **Late Repurchase Window (81.7 Days):**
+   * Among the 2,801 repeat buyers identified via `LAG()`, the natural replenishment cycle spans **81.7 to 116.8 days** (not the first 15 days). Furthermore, experiencing an initial delivery delay reduces repeat purchase propensity by -17.4% relative.
 
-## 6. Recomendaciones Estratégicas (Act)
+---
 
-Para revertir estas fugas operativas y financieras, se diseñaron tres iniciativas respaldadas por una matriz de experimentación A/B de 8 semanas:
+## 5. Executive Visualization (Share)
 
-* **Operación Desbloqueo RJ + Gatillo Preventivo a las 72h:** En los códigos postales críticos de Río de Janeiro, desviar el envío desde el correo estándar hacia transportistas privados y ofrecer 15% de descuento en flete por retiro en Puntos Seguros / Lockers (PUDO). Además, activar una alerta automática por WhatsApp a las 24 horas de retraso con tracking prioritario y cupón de compensación antes de que el cliente cruce el umbral del 4.° día (meta: proteger ~R$ 680k en GMV).
-* **Flete Incremental en Carrito (> R$ 150) y Geo-Priorización:** Modificar la regla de checkout en categorías del hogar para bonificar el 50% del flete a partir de la segunda unidad del mismo vendedor en compras superiores a R$ 150 (comprimiendo el costo de envío del 23.6% al ~14.8%). A la vez, priorizar en el buscador a vendedores del mismo estado para bultos >5 kg, aprovechando que el envío local cumple el 94% del SLA en solo 7.9 días (meta: +R$ 310k en GMV incremental).
-* **Motor de Recompra "Día 65" en Belleza y Salud + QR In-Box:** Filtrar a clientes que recibieron su pedido a tiempo (4.29 ★) y disparar un flujo automatizado de reposición entre los días 65 y 75 post-entrega en Belleza y Salud (la categoría #1 en ventas con R$ 1.23M y reposición natural de 60 a 90 días). Complementarlo con un código QR físico en el paquete para capturar al cliente en la app de Olist sin pagar publicidad (meta: elevar la recompra del 3.0% al 7.5%, sumando +R$ 240k en GMV con CAC = R$ 0).
+Findings were structured into an interactive executive dashboard in Tableau Public:
 
-## 7. Entregables y Estructura del Repositorio
+![Dashboard Preview](./assets/tableau_dashboard.png)
 
-El repositorio se encuentra estructurado en carpetas modulares para facilitar su navegación y reproducibilidad:
+* **View 1:** Logistics Corridor Performance Ranking.
+* **View 2:** Dual-Axis Curve of the SLA Satisfaction Cliff.
+* **View 3:** Category-Level Unit Economics and Freight Ratio Matrix.
+
+---
+
+## 6. Strategic Recommendations & A/B Experimentation (Act)
+
+* **Operation Unlock Rio + 72-Hour Preventive Trigger:** Route critical postal codes to private 3PL carriers and offer a 15% freight discount for pickup at secure lockers (PUDO). Trigger automated WhatsApp tracking and compensation vouchers at 24 hours of delay before reaching the Day 4 cliff (protecting ~R$ 680K GMV).
+* **Incremental Freight Discount (> R$ 150) & Geo-Prioritization:** Discount secondary-unit freight by 50% for orders > R$ 150 from the same seller (compressing freight ratio to ~14.8%). Prioritize local intrastate sellers in search algorithms for bulky items (generating +R$ 310K in GMV).
+* **"Day 65" Replenishment Engine in Health & Beauty:** Trigger automated reorder sequences between days 65 and 75 post-delivery for satisfied customers in Health & Beauty (Olist's #1 sales category with R$ 1.23M), supported by in-box QR codes to capture app downloads at CAC = $0 (+R$ 240K GMV).
+
+---
+
+## 7. Repository Structure
 
 ```text
+olist-ecommerce-operational-financial-audit/
 ├── deliverables/
-│   ├── Olist_Presentacion_Ejecutiva_Final.pptx    # Deck ejecutivo de 13 slides con notas del orador
-│   ├── Olist_Log_Auditoria_Metodologica.docx      # Bitácora detallada de decisiones y reglas de negocio
-│   └── Olist_Caso_Estudio_Completo.md             # Documentación exhaustiva con tablas maestras
+│   ├── Olist_Presentacion_Ejecutiva_Final.pptx    # 13-slide executive presentation with speaker notes
+│   ├── Olist_Log_Auditoria_Metodologica.docx      # Comprehensive audit log and business rules
+│   └── Olist_Caso_Estudio_Completo.md             # Full case study documentation
 ├── sql/
-│   ├── 01_vw_orders_clean.sql                     # Vista maestra certificada en BigQuery
-│   ├── 02_sla_cliff_and_last_mile_audit.sql       # Desglose First-Mile vs. Last-Mile y SLA Cliff
-│   ├── 03_unit_economics_and_multi_item_freight.sql# Análisis de flete multi-unidad por categoría
-│   └── 04_cohort_retention_and_sla_impact.sql     # Análisis de cohortes con ROW_NUMBER y LAG
+│   ├── 01_vw_orders_clean.sql                     # Certified master view in BigQuery
+│   ├── 02_sla_cliff_and_last_mile_audit.sql       # First-mile vs. last-mile breakdown
+│   ├── 03_unit_economics_and_multi_item_freight.sql# Freight ratio and AOV analysis
+│   └── 04_cohort_retention_and_sla_impact.sql     # Cohort analysis with ROW_NUMBER and LAG
 ├── data/
-│   ├── 01_corredores_logisticos_bigquery.csv      # Extracto de métricas por corredor logístico
-│   ├── 02_unit_economics_categorias_bigquery.csv  # Extracto de ingresos y ratio de flete
-│   └── 03_sla_cliff_satisfaccion_bigquery.csv     # Extracto de tramos de SLA y reseñas
+│   ├── 01_corredores_logisticos_bigquery.csv      # Extracted corridor performance metrics
+│   ├── 02_unit_economics_categorias_bigquery.csv  # Extracted category unit economics
+│   └── 03_sla_cliff_satisfaccion_bigquery.csv     # Extracted SLA cliff distribution
 ├── assets/
-│   ├── tableau_dashboard.png                      # Captura del tablero en Tableau Public
-│   └── sla_cliff_chart.png                        # Curva del Acantilado de Satisfacción
-└── README.md
+│   ├── tableau_dashboard.png                      # Interactive dashboard screenshot
+│   └── sla_cliff_chart.png                        # Satisfaction cliff curve
+├── README.es.md                                   # Spanish version of documentation
+└── README.md                                      # Primary English documentation
 ```
 
-* **Presentación Ejecutiva:** [Ver Presentación Ejecutiva en `/deliverables`](./deliverables/Olist_Presentacion_Ejecutiva_Final.pptx)
-* **Scripts SQL:** [Consultas SQL en `/sql`](./sql/)
-* **Datos Procesados:** [Extractos de BigQuery en `/data`](./data/)
+---
+
+### Links & Deliverables
+* 📊 **Executive Presentation:** [Download Deck in `/deliverables`](./deliverables/Olist_Presentacion_Ejecutiva_Final.pptx)
+* 💻 **SQL Scripts:** [BigQuery Queries in `/sql`](./sql/)
+* 📈 **Tableau Dashboard:** [View on Tableau Public](https://public.tableau.com/views/Brazil_ecomercce/Dashboard1?:language=es-ES&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)
