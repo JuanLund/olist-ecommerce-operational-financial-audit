@@ -1,0 +1,22 @@
+# =============================================================================
+# .gitignore - Olist E-Commerce Operational & Financial Audit
+# =============================================================================
+
+# Archivos temporales de Office / Sistema
+~$*
+*.tmp
+*.bak
+*_backup.*
+.DS_Store
+Thumbs.db
+
+# Datasets brutos pesados (>40 MB de Kaggle - se documenta su descarga oficial)
+Sql datasets/
+
+
+# Entornos virtuales y caché de Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/

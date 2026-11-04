@@ -1,0 +1,5 @@
+tramo_entrega,total_pedidos,puntaje_promedio_estrellas,pct_detractores,pct_promotores
+1. A tiempo,88653,4.29,9.23,62.43
+2. Retraso leve (1-3 d),2665,3.76,19.32,43.08
+3. Retraso moderado (4-7 d),1790,2.31,61.62,17.82
+4. Retraso crítico (>7 d),3245,1.73,78.34,7.52
